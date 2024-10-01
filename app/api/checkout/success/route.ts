@@ -11,10 +11,14 @@ export async function POST(request: Request) {
   try {
     const session = await stripe.checkout.sessions.retrieve(sessionId);
 
+    if( !session.client_reference_id || !session.metadata?.bookId) {
+      return NextResponse.json({ error : "セッションデータエラーです"})
+    }
+
     const existingPurchase = await prisma.purchase.findFirst({
       where: {
-        userId: session.client_reference_id!,
-        bookId: session.metadata?.bookId!,
+        userId: session.client_reference_id,
+        bookId: session.metadata.bookId,
       },
     });
 
@@ -29,7 +33,12 @@ export async function POST(request: Request) {
     } else {
       return NextResponse.json({ message: "既に購入済みです。" });
     }
-  } catch (err: any) {
-    return NextResponse.json({ message: err.message });
+  } catch (err) {
+    console.error("error processing purchase:", err);
+    if(err instanceof Stripe.errors.StripeError){
+      return NextResponse.json({ error: err.message}, {status: err.statusCode || 500});
+    }
+
+    return NextResponse.json({ error: "an unexpected error occurred" }, {status: 500});
   }
 }
