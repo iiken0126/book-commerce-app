@@ -30,7 +30,12 @@ export async function POST(request: Request) {
       cancel_url: "http://localhost:3000",
     });
     return NextResponse.json({ checkout_url: session.url });
-  } catch (err: any) {
-    return NextResponse.json({ message: err.message });
+  } catch (err) {
+    console.error("error processing purchase:", err);
+    if(err instanceof Stripe.errors.StripeError){
+      return NextResponse.json({ error: err.message}, {status: err.statusCode || 500});
+    }
+
+    return NextResponse.json({ error: "an unexpected error occurred" }, {status: 500});
   }
 }
