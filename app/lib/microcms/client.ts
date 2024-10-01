@@ -1,4 +1,3 @@
-import DetailBook from "@/app/book/[id]/page";
 import { BookType } from "@/app/types/types";
 import { createClient } from "microcms-js-sdk";
 
